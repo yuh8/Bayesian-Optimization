@@ -16,4 +16,4 @@ class fitGP:
         self.X = X
 
     def standardize(self):
-        _meanX = np.mean(X,)
+        _meanX = np.mean(self.X, axis=1)
