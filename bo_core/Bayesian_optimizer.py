@@ -1,3 +1,4 @@
+
 import numpy as np
 import scipy as sp
 
@@ -10,10 +11,18 @@ class fitGP:
     '''
 
     def __init__(self, X):
-        '''
-        for now the only input parameter is X
-        '''
         self.X = X
 
     def standardize(self):
-        _meanX = np.mean(self.X, axis=1)
+        _meanX = np.mean(self.X, axis=0)
+        _varX = np.var(self.X, axis=0)
+        self.X -= _meanX
+        self.X /= np.sqrt(_varX)
+        return self.X
+
+    def loglik(self):
+        _trainData = self.standardize()
+        return _trainData
+
+    def maximize(self):
+        pass
