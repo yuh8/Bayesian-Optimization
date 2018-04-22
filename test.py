@@ -1,6 +1,7 @@
 import numpy as np
 import scipy as sp
 
+
 from bo_core import fitGP
 
 X = np.array([1, 2, 3, 4], dtype=float)
