@@ -1,3 +1,3 @@
-from .Bayesian_optimizer import fitGP
+from .Bayesian_optimizer import GaussProcess
 
-__all__ = ['fitGP']
+__all__ = ['GaussProcess']
