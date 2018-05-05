@@ -5,9 +5,7 @@ from scipy.optimize import minimize as spmin
 
 class GaussProcess:
     '''
-    Make sure that the columns before the last column
-    contain the input data x and the last column
-    contains the output y
+    Fitting and prediction with Gaussian process with sqaure exponential kernel
     '''
 
     def __init__(self, X, y, Xpre, coding=1):
@@ -24,14 +22,10 @@ class GaussProcess:
         # Testing data sample size
         self.Npre = np.size(Xpre, 1)
         # Demean train data
-        X, self.meanX = self.demean(X)
-        # Decorrelate train data
-        self.X, self.varX, self.V = self.decorInputData(X)
+        self.X, self.meanX = self.demean(X)
         # Demean test data
         temp = np.tile(self.meanX, (self.Npre, 1))
-        Xpre -= temp.T
-        # Decorrelate test data
-        self.Xpre = np.dot(self.V.T, Xpre)
+        self.Xpre -= temp.T
 
         # Output data is 1D numpy array
         y = np.asarray(y, dtype=float)
@@ -49,80 +43,66 @@ class GaussProcess:
         X -= temp.T
         return X, meanX
 
+    # Squared exponential kernel and hyperparameter derivatives
     @staticmethod
-    def decorInputData(X):
-        N = np.size(X, 1)
-        meanX = np.mean(X, axis=1)
-        temp = np.tile(meanX, (N, 1))
-        X -= temp.T
-        # Compute covariance matrix
-        cov = 1 / (N - 1) * np.dot(X.T, X)
-        w, V = np.linalg.eigh(cov)
-        deco_X = np.dot(V.T, X)
-        return deco_X, w, V
-
-    # Squared exponential kernel
-    @staticmethod
-    def covSE(par, X, xtest, trainmode=False):
-        n1 = np.size(X, 1)
-        n2 = np.size(xtest, 1)
-        K = np.zeros((n1, n2))
-        for i in range(0, n1):
-            for j in range(0, n2):
-                temp = np.divide(X[:, i], np.sqrt(par[1])) - np.divide(xtest[:, j], np.sqrt(par[1]))
-                if not trainmode:
-                    K[i, j] = np.square(par) * np.exp(-np.dot(temp, temp) / 2)
-                else:
-                    K[i, j] = 2 * par * np.exp(-np.dot(temp, temp) / 2)
+    def covSE(par, X, xtest, trainmode=0):
+        if trainmode == 0:
+            K = np.square(par[0]) * np.exp(-1 / 2 * np.dot(X.T, xtest) / np.square(par[1]))
+        elif trainmode == 1:
+            K = 2 * par[0] * np.exp(-1 / 2 * np.dot(X.T, xtest) / np.square(par[1]))
+        else:
+            K = np.square(par[0]) * np.exp(-1 / 2 * np.dot(X.T, xtest) / np.square(par[1]))
+            temp = np.dot(X.T, xtest) / np.power(par[1], 3)
+            K = K * temp
         return K
 
-    def choleInvCov(self, alpha, sigma):
-        K = self.covSE(par[0], self.X, self.X, self.varX)
-        Ks = K + np.square(par[1]) * np.eye(self.N)
+    # Stable inversion of symmetric PD matrix
+    def choleInvKs(self, par):
+        K = self.covSE(par, self.X, self.X)
+        Ks = K + np.square(par[2]) * np.eye(self.N)
         # Stable inversion of Ks using cholesky decomposition
         L = np.linalg.cholesky(Ks)
         invKs = np.inv(L.T) * (np.inv(L) * np.eye(self.N))
-        return Ks
+        return K, Ks, invKs
 
     # Compute marginal log-likelihood
     def negloglik(self, par):
-        K = self.covSE(par[0], self.X, self.X, self.varX)
-        Ks = K + np.square(par[1]) * np.eye(self.N)
-        # Stable inversion of Ks using cholesky decomposition
-        L = np.linalg.cholesky(Ks)
-        invKs = np.inv(L.T) * (np.inv(L) * np.eye(self.N))
+        _, Ks, invKs = self.choleInvKs(par)
         # Compute negative log-likelihood
         negloglik = self.N / 2 * np.log(2 * np.pi)
-        negloglik += 1 / 2 * np.dot(self.y * invKs, self.y)
+        negloglik += 1 / 2 * np.dot(np.dot(self.y, invKs), self.y)
         negloglik += 1 / 2 * np.log(np.linalg.det(Ks))
         return negloglik
 
     # method for computing the derivative of the negloglike
     def der_negloglik(self, par):
-        K = self.covSE(par[0], self.X, self.X, self.varX)
-        Ks = K + np.square(par[1]) * np.eye(self.N)
-        # Stable inversion of K using cholesky decomposition
-        L = np.linalg.cholesky(Ks)
-        invKs = np.inv(L.T) * (np.inv(L) * np.eye(self.N))
-        der = np.zeros(2)
+        K, Ks, invKs = self.choleInvKs(par)
+        der = np.zeros(3)
         # Eq.5.9 of RW book
         alpha = np.dot(invKs, self.y)
         alpha2 = np.outer(alpha, alpha)
-        der[0] = self.covSE(par[0], self.X, self.X, self.varX, trainmode=True)
+        der[0] = self.covSE(par, self.X, self.X, trainmode=1)
         der[0] = 1 / 2 * np.trace((alpha2 - invKs) * der[0])
-        der[1] = K + 2 * par[1] * np.eye(self.N)
+        der[1] = self.covSE(par, self.X, self.X, trainmode=2)
         der[1] = 1 / 2 * np.trace((alpha2 - invKs) * der[1])
+        der[2] = K + 2 * par[2] * np.eye(self.N)
+        der[2] = 1 / 2 * np.trace((alpha2 - invKs) * der[2])
         return der
 
     def minimize(self):
-        par0 = np.array([0.01, 0.01])
+        par0 = np.array([0.01, 0.01, 0.01])
         par_bar = spmin(self.negloglik, par0, method='BFGS', jac=self.der_negloglik, options={'disp': True})
         return par_bar
 
     def Predict(self, par):
-        K = self.covSE(par[0], self.X, self.X, self.varX)
-        Ks = K + par[1]**2 * np.eye(self.N)
-        L = np.linalg.cholesky(Ks)
-        invKs = np.inv(L.T) * (np.inv(L) * np.eye(self.N))
-        kpre = self.covSE(par[0], self.X, self.Xpre, self.varX)
-        mean_Ypre = np.dot(kpre.T,)
+        # Eq2.25 and 2.26 of RW book
+        _, _, invKs = self.choleInvKs(par)
+        kpre1 = self.covSE(par, self.X, self.Xpre)
+        kpre2 = self.covSE(par, self.Xpre, self.Xpre)
+        # Eq2.25
+        mean_Ypre = np.dot(np.dot(kpre1.T, invKs), self.y)
+        temp = np.tile(self.meany, (self.Npre, 1))
+        mean_Ypre += temp
+        # Eq2.26
+        var_Ypre = kpre2 - np.dot(np.dot(kpre1.T, invKs), kpre1)
+        return mean_Ypre, var_Ypre
