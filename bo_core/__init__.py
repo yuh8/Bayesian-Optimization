@@ -1,3 +1,4 @@
-from .Bayesian_optimizer import GaussProcess
+from .GaussProcess import GP
+from .BayesianOptimizer import BO
 
-__all__ = ['GaussProcess']
+__all__ = ['GaussProcess', 'BO']
