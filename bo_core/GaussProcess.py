@@ -46,14 +46,21 @@ class GP:
     # Squared exponential kernel and hyperparameter derivatives
     @staticmethod
     def covSE(par, X, xtest, trainmode=0):
+        N = np.size(X, 1)
+        Nt = np.size(xtest, 1)
+        exp_temp = np.zeros((N, Nt))
+        for i in range(0, N):
+            for j in range(0, Nt):
+                temp = X[:, i] - xtest[:, j]
+                exp_temp[i, j] = np.dot(temp, temp)
         if trainmode == 0:
-            K = np.square(par[0]) * np.exp(-1 / 2 * np.dot(X.T, xtest) / np.square(par[1]))
+            K = np.square(par[0]) * np.exp(-1 / 2 * exp_temp / np.square(par[1]))
         elif trainmode == 1:
-            K = 2 * par[0] * np.exp(-1 / 2 * np.dot(X.T, xtest) / np.square(par[1]))
+            K = 2 * par[0] * np.exp(-1 / 2 * exp_temp / np.square(par[1]))
         else:
-            K = np.square(par[0]) * np.exp(-1 / 2 * np.dot(X.T, xtest) / np.square(par[1]))
-            temp = np.dot(X.T, xtest) / np.power(par[1], 3)
-            K = K * temp
+            K = np.square(par[0]) * np.exp(-1 / 2 * exp_temp / np.square(par[1]))
+            temp = exp_temp / np.power(par[1], 3)
+            K = np.multiply(K, temp)
         return K
 
     # Stable inversion of symmetric PD matrix
@@ -62,13 +69,13 @@ class GP:
         Ks = K + np.square(par[2]) * np.eye(self.N)
         # Stable inversion of Ks using cholesky decomposition
         L = np.linalg.cholesky(Ks)
-        invKs = np.inv(L.T) * (np.inv(L) * np.eye(self.N))
+        invKs = np.dot(np.inv(L.T), np.dot(np.inv(L), np.eye(self.N)))
         return K, Ks, invKs
 
     # Compute marginal log-likelihood
     def negloglik(self, par):
         _, Ks, invKs = self.choleInvKs(par)
-        # Compute negative log-likelihood
+        # Compute negative log-likelihood Eq 2.30 of RW book
         negloglik = self.N / 2 * np.log(2 * np.pi)
         negloglik += 1 / 2 * np.dot(np.dot(self.y, invKs), self.y)
         negloglik += 1 / 2 * np.log(np.linalg.det(Ks))
@@ -81,14 +88,18 @@ class GP:
         # Eq.5.9 of RW book
         alpha = np.dot(invKs, self.y)
         alpha2 = np.outer(alpha, alpha)
+        # Derivative w.r.t par[0]
         der[0] = self.covSE(par, self.X, self.X, trainmode=1)
-        der[0] = 1 / 2 * np.trace((alpha2 - invKs) * der[0])
+        der[0] = 1 / 2 * np.trace(np.dot(alpha2 - invKs, der[0]))
+        # Derivative w.r.t par[1]
         der[1] = self.covSE(par, self.X, self.X, trainmode=2)
-        der[1] = 1 / 2 * np.trace((alpha2 - invKs) * der[1])
+        der[1] = 1 / 2 * np.trace(np.dot(alpha2 - invKs, der[1]))
+        # Derivative w.r.t par[2]
         der[2] = K + 2 * par[2] * np.eye(self.N)
-        der[2] = 1 / 2 * np.trace((alpha2 - invKs) * der[2])
+        der[2] = 1 / 2 * np.trace(np.dot(alpha2 - invKs, der[2]))
         return der
 
+    @property
     def minimize(self):
         par0 = np.array([0.01, 0.01, 0.01])
         par_bar = spmin(self.negloglik, par0, method='BFGS', jac=self.der_negloglik, options={'disp': True})
