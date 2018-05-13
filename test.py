@@ -1,7 +1,11 @@
 import numpy as np
 import scipy as sp
-from bo_core import GaussProcess
 
-a = np.array([1, 2, 3, 4])
-s = np.diag(a * 2)
-print(np.dot(s, a.T))
+
+A = np.array([[2, 2, 1], [2, 2, 1]])
+B = np.ones(3)
+
+print(A.flat)
+if len(B.shape) == 1:
+    B = B.reshape(1, -1)
+print(B.shape[0])
