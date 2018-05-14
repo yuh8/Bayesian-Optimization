@@ -22,7 +22,6 @@ class BayesOpt:
         self.ybest = y[-1]
         # The bound for search
         self.bound = xbound
-        # Dictonary to store the best values for each iteration
 
     def max_opts(self):
         output = {'Xbest': self.xbest, 'ybest': self.ybest}
