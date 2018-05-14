@@ -1,13 +1,16 @@
 import numpy as np
 
-__all__ = ['demean', 'covSE', 'choleInvKs', 'Predict']
+__all__ = ['demean', 'covSE', 'choleInvKs','logdetX']
 
 
 def demean(X, std=1):
     meanX = np.mean(X, axis=0)
     stdX = np.std(X, axis=0)
     N = X.shape[0]
-    temp = np.tile(meanX, (N, 1))
+    if len(X.shape) == 1:
+        temp = meanX
+    else:
+        temp = np.tile(meanX, (N, 1))
     if std == 1:
         X -= temp
         X /= stdX
@@ -67,17 +70,7 @@ def choleInvKs(par, X, covFcn):
     return K, Ks, invKs
 
 
-def Predict(par, X, y, meany, Xpre, covFcn):
-    # Eq2.25 and 2.26 of RW book
-    Npre = Xpre.shape[0]
-    _, _, invKs = choleInvKs(par, X, covFcn)
-    kpre1 = covFcn(par, X, Xpre)
-    # Eq2.25
-    mean_Ypre = np.dot(np.dot(kpre1.T, invKs), y)
-    temp = np.tile(meany, (Npre, 1))
-    mean_Ypre += temp
-    # Eq2.26
-
-    var_Ypre = par[0]**2 - np.dot(np.dot(kpre1.T, invKs), kpre1)
-    var_Ypre = np.diag(var_Ypre)
-    return mean_Ypre, var_Ypre
+def logdetX(X):
+    L = np.linalg.cholesky(X)
+    y = 2 * sum(np.log(np.diag(L)))
+    return y
