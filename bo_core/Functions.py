@@ -3,12 +3,18 @@ import numpy as np
 __all__ = ['demean', 'covSE', 'choleInvKs', 'Predict']
 
 
-def demean(X):
+def demean(X, std=1):
     meanX = np.mean(X, axis=0)
+    stdX = np.std(X, axis=0)
     N = X.shape[0]
     temp = np.tile(meanX, (N, 1))
-    X -= temp
-    return X, meanX
+    if std == 1:
+        X -= temp
+        X /= stdX
+        return X, meanX, stdX
+    else:
+        X -= temp
+        return X, meanX
 
 
 # Squared exponential kernel and hyperparameter derivatives
@@ -57,7 +63,7 @@ def choleInvKs(par, X, covFcn):
     Ks = K + par[-1]**2 * np.eye(N)
     # Stable inversion of Ks using cholesky decomposition
     L = np.linalg.cholesky(Ks)
-    invKs = np.dot(np.inv(L.T), np.dot(np.inv(L), np.eye(N)))
+    invKs = np.dot(np.linalg.inv(L.T), np.dot(np.linalg.inv(L), np.eye(N)))
     return K, Ks, invKs
 
 
@@ -71,5 +77,7 @@ def Predict(par, X, y, meany, Xpre, covFcn):
     temp = np.tile(meany, (Npre, 1))
     mean_Ypre += temp
     # Eq2.26
+
     var_Ypre = par[0]**2 - np.dot(np.dot(kpre1.T, invKs), kpre1)
+    var_Ypre = np.diag(var_Ypre)
     return mean_Ypre, var_Ypre

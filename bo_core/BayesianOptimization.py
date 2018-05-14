@@ -3,11 +3,11 @@ from .Optimizer import AcqOptimizer
 from .GaussProcess import GP
 
 
-class BO:
+class BayesOpt:
     """Bayesian Optimization Algorithm"""
 
     def __init__(self, x0, y0, xbound):
-        if len(x0.shape) or len(y0) == 1:
+        if len(x0.shape) == 1 or len(y0) == 1:
             raise ValueError('number of initial points must be at least 2')
         # Initiating the BO procedure
         X = np.asarray(x0, dtype=float)
