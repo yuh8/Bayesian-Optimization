@@ -1,6 +1,6 @@
 import numpy as np
 
-__all__ = ['demean', 'covSE', 'choleInvKs','logdetX']
+__all__ = ['demean', 'covSE', 'choleInvKs', 'logdetX']
 
 
 def demean(X, std=1):
@@ -70,6 +70,7 @@ def choleInvKs(par, X, covFcn):
     return K, Ks, invKs
 
 
+# Stable computation of log determinant of large matrix
 def logdetX(X):
     L = np.linalg.cholesky(X)
     y = 2 * sum(np.log(np.diag(L)))

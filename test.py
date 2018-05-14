@@ -8,8 +8,8 @@ df_test = pd.read_csv('sarcos_test.csv', header=None)
 xtrain = df_train.loc[:300, :20]
 ytrain = df_train.loc[:300, 21]
 # Testing data
-xtest = df_test.loc[0:149, :20]
-ytest = df_test.loc[0:149, 21]
+xtest = df_test.loc[0:300, :20]
+ytest = df_test.loc[0:300, 21]
 Nt = xtest.shape[0]
 
 gp = GP(xtrain, ytrain)

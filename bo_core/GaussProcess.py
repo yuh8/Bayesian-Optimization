@@ -10,8 +10,8 @@ class GP:
     '''
 
     def __init__(self, X, y):
-        # Input data rows are features, columns are data samples
-        # d by N array
+        # Input data rows are samples, columns are features
+        # N by D array
         X = np.asarray(X, dtype=float)
         y = np.asarray(y, dtype=float)
         if len(X.shape) < 2 or len(y) < 2:
