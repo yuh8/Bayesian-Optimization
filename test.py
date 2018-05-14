@@ -1,11 +1,12 @@
 import numpy as np
-import scipy as sp
 
 
-A = np.array([[2, 2, 1], [2, 2, 1]])
+A = 2
 B = np.ones(3)
 
-print(A.flat)
-if len(B.shape) == 1:
-    B = B.reshape(1, -1)
-print(B.shape[0])
+
+s = np.argsort(A)[::-1]
+for i in range(0, 10):
+    A = np.vstack((A, i))
+
+print(A)

@@ -60,9 +60,10 @@ class GP:
     @property
     def minimize(self):
         par0 = np.array([0.01, 0.01, 0.01])
-        par_bar = spmin(self.negloglik, par0, method='BFGS', jac=self.der_negloglik, options={'disp': True})
-        return par_bar
+        par_bar = spmin(self.negloglik, par0, method='BFGS', jac=self.der_negloglik, options={'xtol': 1e-6, 'disp': True})
+        return par_bar, self.meanX
 
+    # Posterior prediction
     def GP_predict(self, par_bar, Xpre):
         # Testing data sample size
         if len(Xpre.shape) == 1:
@@ -72,3 +73,4 @@ class GP:
         temp = np.tile(self.meanX, (Npre, 1))
         Xpre -= temp
         mean_Ypre, var_Ypre = Predict(par_bar, self.X, self.y, self.meany, Xpre, covSE)
+        return mean_Ypre, var_Ypre
