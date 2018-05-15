@@ -63,17 +63,19 @@ class GP:
         '''
         nstarts = number of random starts
         '''
+        # Be careful of the lazy coding of number of hyper parameters
         temp = np.zeros((nstarts, 3))
         fval = np.zeros(nstarts)
         for i in range(0, nstarts):
             par0 = np.random.randn(3)
+            # Be careful the output of scipy minimize is an ndarray
             res = spmin(self.negloglik, par0, method='L-BFGS-B', jac=self.der_negloglik, options={'gtol': 1e-4, 'disp': False})
             temp[i, :] = np.squeeze(res.x)
             fval[i] = np.squeeze(res.fun)
         # Choose the start yielding the Max LL
         idx = np.argmin(fval)
         par_bar = temp[idx, :]
-        return par_bar
+        return par_bar, self.meanX
 
     # Posterior prediction
     def predict(self, par_bar, Xpre):

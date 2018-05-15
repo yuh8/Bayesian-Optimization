@@ -36,7 +36,7 @@ def covSE(par, X, Xpre, trainmode=0):
     for i in range(0, N):
         for j in range(0, Nt):
             temp1 = X[i, :] - Xpre[j, :]
-            exp_temp[i, j] = np.dot(temp1.T, temp1)
+            exp_temp[i, j] = np.dot(temp1, temp1)
     # None derivative mode
     if trainmode == 0:
         K = par[0]**2 * np.exp(-1 / 2 * exp_temp / par[1]**2)

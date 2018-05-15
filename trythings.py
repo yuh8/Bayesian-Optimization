@@ -1,12 +1,17 @@
 import pandas as pd
 import numpy as np
-df_train = pd.read_csv('sarcos_train.csv', header=None)
-df_test = pd.read_csv('sarcos_test.csv', header=None)
-# Training data
-xtrain = df_train.loc[:, :20]
-ytrain = df_train.loc[:, 21]
-# Testing data
-xtest = df_test.loc[200:299, :20]
-ytest = df_test.loc[200:299, 21]
+from bo_core import (AcqOptimizer, GP)
+df = pd.read_csv('VVT.csv', header=None)
+df.dropna(how='all', inplace=True)
+df = df.reset_index(drop=True)
+idx = np.random.randint(0, 1000, 100)
+xtrain0 = df.loc[idx, :3]
+ytrain0 = df.loc[10, 5] * 0.6 - df.loc[10, 4] * 0.4
 
-print(ytrain.shape)
+
+angle_min = df.loc[:, [2]].min().values[0]
+angle_max = df.loc[:, [2]].max().values
+VVT_min = df.loc[:, [3]].min().values
+VVT_max = df.loc[:, [3]].max().values
+xbound = ((angle_min, angle_max), (VVT_min, VVT_max))
+print(xbound)
