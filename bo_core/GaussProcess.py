@@ -20,6 +20,7 @@ class GP:
         self.N = np.size(X, 0)
         # Demean train data
         self.X, self.meanX, self.stdX = demean(X)
+
         # Output data is a 1D numpy array
         y = np.asarray(y, dtype=float)
         self.y, self.meany = demean(y, std=0)
@@ -38,44 +39,26 @@ class GP:
         negloglik += 1 / 2 * logdetX(Ks)
         return negloglik
 
-    # Method for computing the derivative of the negloglike
-    def der_negloglik(self, par):
-        par = np.squeeze(par)
-        K, Ks, invKs = choleInvKs(par, self.X, covSE)
-        der = np.zeros(len(par))
-        # Eq.5.9 of RW book
-        alpha = np.dot(invKs, self.y)
-        alpha2 = np.outer(alpha, alpha)
-        temp = alpha2 - invKs
-        # Derivative w.r.t par[0]
-        der_temp = covSE(par, self.X, self.X, trainmode=1)
-        der[0] = 1 / 2 * np.trace(np.dot(temp, der_temp))
-        # Derivative w.r.t par[1]
-        der_temp1 = covSE(par, self.X, self.X, trainmode=2)
-        der[1] = 1 / 2 * np.trace(np.dot(temp, der_temp1))
-        # Derivative w.r.t par[2]
-        der_temp2 = 2 * par[2] * np.eye(self.N)
-        der[2] = 1 / 2 * np.trace(np.dot(temp, der_temp2))
-        return der
-
     # Fit gaussian process
     def fit(self, nstarts=10):
         '''
         nstarts = number of random starts
         '''
         # Be careful of the lazy coding of number of hyper parameters
-        temp = np.zeros((nstarts, 3))
+        d = 3
+        temp = np.zeros((nstarts, d))
         fval = np.zeros(nstarts)
         for i in range(0, nstarts):
-            par0 = np.random.randn(3)
+            par0 = np.random.rand(d)
             # Be careful the output of scipy minimize is an ndarray
-            res = spmin(self.negloglik, par0, method='L-BFGS-B', jac=self.der_negloglik, options={'gtol': 1e-4, 'disp': False})
+            res = spmin(self.negloglik, par0, method='L-BFGS-B', options={'gtol': 1e-4, 'disp': False, 'maxfun': 50})
             temp[i, :] = np.squeeze(res.x)
             fval[i] = np.squeeze(res.fun)
         # Choose the start yielding the Max LL
         idx = np.argmin(fval)
-        par_bar = temp[idx, :]
-        return par_bar, self.meanX
+        res = spmin(self.negloglik, temp[idx, :], method='L-BFGS-B', options={'gtol': 1e-4, 'disp': False})
+        par_bar = res.x
+        return par_bar, self.meanX, self.stdX
 
     # Posterior prediction
     def predict(self, par_bar, Xpre):
@@ -97,3 +80,23 @@ class GP:
         # Eq2.26
         var_Ypre = par_bar[0]**2 - np.diag(np.dot(np.dot(kpre1.T, invKs), kpre1))
         return mean_Ypre, var_Ypre
+
+    # Method for computing the derivative of the negloglike
+    def der_negloglik(self, par):
+        par = np.squeeze(par)
+        K, Ks, invKs = choleInvKs(par, self.X, covSE)
+        der = np.zeros(len(par))
+        # Eq.5.9 of RW book
+        alpha = np.dot(invKs, self.y)
+        alpha2 = np.outer(alpha, alpha)
+        temp = alpha2 - invKs
+        # Derivative w.r.t par[0]
+        der_temp = covSE(par, self.X, self.X, trainmode=1)
+        der[0] = 1 / 2 * np.trace(np.dot(temp, der_temp))
+        # Derivative w.r.t par[1]
+        der_temp1 = covSE(par, self.X, self.X, trainmode=2)
+        der[1] = 1 / 2 * np.trace(np.dot(temp, der_temp1))
+        # Derivative w.r.t par[2]
+        der_temp2 = 2 * par[2] * np.eye(self.N)
+        der[2] = 1 / 2 * np.trace(np.dot(temp, der_temp2))
+        return der
