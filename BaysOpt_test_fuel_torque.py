@@ -18,11 +18,11 @@ df_VVT = pd.DataFrame(index=index, columns=columns, dtype=float)
 for i in range(15, 75, 5):
     for j in range(1000, 6200, 200):
         Acq = AcqOptimizer(par_bar, gp, xbound, [], [j, i])
-        xbest, _ = Acq.optim(nstarts=20, mode=1)
+        xbest, _ = Acq.optim(nstarts=5, mode=1)
         df_angle.loc['{}'.format(i), '{}'.format(j)] = xbest[0]
         df_VVT.loc['{}'.format(i), '{}'.format(j)] = xbest[1]
-df_VVT.to_csv('VVTFuelcalibr.csv', sep=',')
-df_angle.to_csv('angleFuelcalibr.csv', sep=',')
+df_VVT.to_csv('VVTFuelTorquecalibr.csv', sep=',')
+df_angle.to_csv('angleFuelTorquecalibr.csv', sep=',')
 
 # # Plot
 # import matplotlib.pyplot as plt
