@@ -13,7 +13,7 @@ df.dropna(how='all', inplace=True)
 df = df.reset_index(drop=True)
 
 # Setting up training examples
-N = 100
+N = 300
 Nt = 500
 Ntstart = 400
 Ntend = Ntstart + Nt - 1
@@ -42,7 +42,7 @@ ytest = (ytest1 - meany1) / stdy1
 
 # Initiate automatic hand-shake
 gp = GP(Xtrain, ytrain)
-par_bar, meanX, stdX = gp.fit(nstarts=20)
+par_bar, _, _ = gp.fit(nstarts=20)
 # define bound
 angle_min = df.loc[:, [2]].min().values
 angle_max = df.loc[:, [2]].max().values
@@ -57,7 +57,6 @@ param['xbound'] = xbound
 param['gp'] = gp
 np.save('param.npy', param)
 ypre, varypre = gp.predict(par_bar, xtest)
-ypre = np.squeeze(ypre)
 pl.plot(np.arange(0, Nt), ytest, 'b-.', lw=2)
 pl.gca().fill_between(np.arange(0, Nt), ypre - 2 * np.sqrt(varypre), ypre + 2 * np.sqrt(varypre), color="#dddddd")
 pl.plot(np.arange(0, Nt), ypre, 'r--', lw=2)

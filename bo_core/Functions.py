@@ -1,22 +1,19 @@
 import numpy as np
+import os
 
-__all__ = ['demean', 'covSE', 'choleInvKs', 'logdetX']
+__all__ = ['demean', 'covSE', 'choleInvKs', 'logdetX', 'createFolder']
 
 
 def demean(X, std=1):
     meanX = np.mean(X, axis=0)
     stdX = np.std(X, axis=0)
-    N = X.shape[0]
-    if len(X.shape) == 1:
-        temp = meanX
-    else:
-        temp = np.tile(meanX, (N, 1))
+
     if std == 1:
-        X -= temp
+        X -= meanX
         X /= stdX
         return X, meanX, stdX
     else:
-        X -= temp
+        X -= meanX
         return X, meanX
 
 
@@ -65,13 +62,29 @@ def choleInvKs(par, X, covFcn):
     N = X.shape[0]
     Ks = K + par[-1]**2 * np.eye(N)
     # Stable inversion of Ks using cholesky decomposition
-    L = np.linalg.cholesky(Ks)
-    invKs = np.dot(np.linalg.inv(L.T), np.dot(np.linalg.inv(L), np.eye(N)))
-    return K, Ks, invKs
+    try:
+        L = np.linalg.cholesky(Ks)
+    except np.linalg.LinAlgError as e:
+        print(e)
+    else:
+        invKs = np.dot(np.linalg.inv(L.T), np.dot(np.linalg.inv(L), np.eye(N)))
+        return K, Ks, invKs
 
 
 # Stable computation of log determinant of large matrix
 def logdetX(X):
-    L = np.linalg.cholesky(X)
-    y = 2 * sum(np.log(np.diag(L)))
-    return y
+    try:
+        L = np.linalg.cholesky(X)
+    except np.linalg.LinAlgError as e:
+        print(e)
+    else:
+        y = 2 * sum(np.log(np.diag(L)))
+        return y
+
+
+def createFolder(directory):
+    try:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+    except OSError:
+        print('Error: Creating directory. ' + directory)

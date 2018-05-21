@@ -13,7 +13,9 @@ class AcqOptimizer:
         self.bound = xbound
         # The best output corresponding to the best input
         self.ybest = ybest
+        # constant speed and load for engine caliberation
         self.xconst = xconst
+        # Gaussian process object
         self.gp = gp
 
     def ExpImprove(self, x):
@@ -23,7 +25,7 @@ class AcqOptimizer:
         m_x, s_x = self.gp.predict(self.par, x)
         self.eta = np.sqrt(s_x)
         self.u = (self.ybest - m_x) / self.eta
-        EI = self.eta * (self.u * norm.cdf(self.u) + norm.pdf(self.u))
+        EI = -self.eta * (self.u * norm.cdf(self.u) + norm.pdf(self.u))
         return EI
 
     # Simply searching for min of mean function
@@ -37,27 +39,25 @@ class AcqOptimizer:
     def optim(self, nstarts=10, mode=0):
         if mode == 0:
             d = len(self.bound)
-            temp = np.zeros((nstarts, d))
-            fval = np.zeros(nstarts)
+            max_fun = -np.inf
             for i in range(0, nstarts):
                 par0 = np.random.uniform(self.bound[0], self.bound[1], d)
                 res = spmin(self.ExpImprove, par0, method='L-BFGS-B', bounds=self.bound, options={'xtol': 1e-4, 'disp': False})
-                temp[i, :] = np.squeeze(res.x)
-                fval[i] = np.squeeze(res.fun)
-            idx = np.argmin(fval)
-            xbest_new = temp[idx, :]
+                # Parsimonious trick for finding the max
+                if res.fun > max_fun:
+                    max_fun = res.fun
+                    xbest_new = res.x
             ybest_new, _ = self.gp.predict(self.par, xbest_new)
             return xbest_new, ybest_new
         else:
             d = len(self.bound)
-            temp = np.zeros((nstarts, d))
-            fval = np.zeros(nstarts)
+            max_fun = -np.inf
             for i in range(0, nstarts):
                 par0 = np.random.uniform(self.bound[0], self.bound[1], d)
-                res = spmin(self.min_mx, par0, method='L-BFGS-B', bounds=self.bound, options={'gtol': 1e-4, 'disp': False})
-                temp[i, :] = np.squeeze(res.x)
-                fval[i] = np.squeeze(res.fun)
-            idx = np.argmin(fval)
-            xbest_new = temp[idx, :]
+                res = spmin(self.min_mx, par0, method='L-BFGS-B', bounds=self.bound, options={'gtol': 1e-8, 'disp': False})
+                # Parsimonious trick for finding the max
+                if res.fun > max_fun:
+                    max_fun = res.fun
+                    xbest_new = res.x
             ybest_new, _ = self.gp.predict(self.par, np.hstack((self.xconst, xbest_new)))
             return xbest_new, ybest_new

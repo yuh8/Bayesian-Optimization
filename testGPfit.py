@@ -4,8 +4,8 @@ import matplotlib.pyplot as pl
 from bo_core import *
 from timeit import default_timer as timer
 
-df_train = pd.read_csv('sarcos_train.csv', header=None)
-df_test = pd.read_csv('sarcos_test.csv', header=None)
+df_train = pd.read_csv('./Data/sarcos_train.csv', header=None)
+df_test = pd.read_csv('./Data/sarcos_test.csv', header=None)
 # Training data
 xtrain = df_train.loc[:300, :20]
 ytrain = df_train.loc[:300, 21]

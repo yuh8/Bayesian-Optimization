@@ -41,7 +41,7 @@ ytest = (ytest1 - meany1) / stdy1 * alpha - (ytest2 - meany2) / stdy2 * (1 - alp
 # Initiate automatic hand-shake
 gp = GP(Xtrain, ytrain)
 par_bar, meanX, stdX = gp.fit(nstarts=20)
-# define bound
+# Define bound
 angle_min = df.loc[:, [2]].min().values
 angle_max = df.loc[:, [2]].max().values
 VVT_min = df.loc[:, [3]].min().values

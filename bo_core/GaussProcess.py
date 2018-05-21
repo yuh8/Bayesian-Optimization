@@ -6,7 +6,7 @@ from .Functions import *
 
 class GP:
     '''
-    Fitting and prediction with Gaussian process with sqaure exponential kernel
+    Fitting and prediction with Gaussian process with squared exponential kernel
     '''
 
     def __init__(self, X, y):
@@ -46,17 +46,16 @@ class GP:
         '''
         # Be careful of the lazy coding of number of hyper parameters
         d = 3
-        temp = np.zeros((nstarts, d))
-        fval = np.zeros(nstarts)
+        max_fun = -np.inf
         for i in range(0, nstarts):
             par0 = np.random.rand(d)
             # Be careful the output of scipy minimize is an ndarray
-            res = spmin(self.negloglik, par0, method='L-BFGS-B', options={'gtol': 1e-4, 'disp': False, 'maxfun': 50})
-            temp[i, :] = np.squeeze(res.x)
-            fval[i] = np.squeeze(res.fun)
-        # Choose the start yielding the Max LL
-        idx = np.argmin(fval)
-        res = spmin(self.negloglik, temp[idx, :], method='L-BFGS-B', options={'gtol': 1e-4, 'disp': False})
+            res = spmin(self.negloglik, par0, method='L-BFGS-B', options={'gtol': 1e-4, 'disp': False, 'maxfun': 100})
+            # Choose the start yielding the Max LL
+            if res.fun > max_fun:
+                max_fun = res.fun
+                temp = res.x
+        res = spmin(self.negloglik, temp, method='L-BFGS-B', options={'gtol': 1e-8, 'disp': False})
         par_bar = res.x
         return par_bar, self.meanX, self.stdX
 
@@ -66,10 +65,9 @@ class GP:
         Xpre = np.asarray(Xpre)
         if len(Xpre.shape) == 1:
             Xpre = Xpre.reshape(1, -1)
-        Npre = np.size(Xpre, 0)
+        Npre = Xpre.shape[0]
         # standardize test data
-        temp = np.tile(self.meanX, (Npre, 1))
-        Xpre -= temp
+        Xpre -= self.meanX
         Xpre /= self.stdX
         _, _, invKs = choleInvKs(par_bar, self.X, covSE)
         kpre1 = covSE(par_bar, self.X, Xpre)
