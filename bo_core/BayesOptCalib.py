@@ -94,7 +94,7 @@ class BOCalib:
         X = X.reshape(N, N)
         Y = Y.reshape(N, N)
         Z = z.reshape(N, N)
-        plt.figure(count)
+        plt.figure()
         plt.contourf(X, Y, Z, 25, cmap=plt.cm.jet)
         plt.colorbar()
         plt.plot(X.item(np.argmin(Z)), Y.item(np.argmin(Z)), 'r+', ms=20)
@@ -103,3 +103,4 @@ class BOCalib:
         plt.title('Speed = {} rpm, load = {} %'.format(test_point[0], test_point[1]), fontsize=16)
         createFolder('./Figs/')
         plt.savefig('Figs/Fig{}.png'.format(count))
+        plt.close()
