@@ -42,7 +42,7 @@ class AcqOptimizer:
             max_fun = -np.inf
             for i in range(0, nstarts):
                 par0 = np.random.uniform(self.bound[0], self.bound[1], d)
-                res = spmin(self.ExpImprove, par0, method='L-BFGS-B', bounds=self.bound, options={'xtol': 1e-4, 'disp': False})
+                res = spmin(self.ExpImprove, par0, method='L-BFGS-B', bounds=self.bound, options={'xtol': 1e-8, 'disp': False})
                 # Parsimonious trick for finding the max
                 if res.fun > max_fun:
                     max_fun = res.fun

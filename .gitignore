@@ -2,3 +2,5 @@
 *.pyc
 .idea
 .project
+.Figs/
+.Results/

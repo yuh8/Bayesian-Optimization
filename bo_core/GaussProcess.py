@@ -50,7 +50,7 @@ class GP:
         for i in range(0, nstarts):
             par0 = np.random.rand(d)
             # Be careful the output of scipy minimize is an ndarray
-            res = spmin(self.negloglik, par0, method='L-BFGS-B', options={'gtol': 1e-4, 'disp': False, 'maxfun': 100})
+            res = spmin(self.negloglik, par0, method='L-BFGS-B', options={'gtol': 1e-8, 'disp': False, 'maxfun': 50})
             # Choose the start yielding the Max LL
             if res.fun > max_fun:
                 max_fun = res.fun
