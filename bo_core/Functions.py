@@ -60,7 +60,7 @@ def covSE(par, X, Xpre, trainmode=0):
 def choleInvKs(par, X, covFcn):
     K = covFcn(par, X, X)
     N = X.shape[0]
-    Ks = K + par[-1]**2 * np.eye(N)
+    Ks = K + (par[-1]**2 + 1e-6) * np.eye(N)
     # Stable inversion of Ks using cholesky decomposition
     try:
         L = np.linalg.cholesky(Ks)

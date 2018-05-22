@@ -9,17 +9,18 @@ from .Functions import createFolder
 class BOCalib:
     """class for training the calibrator"""
 
-    def __init__(self, Data, AngleRange=None, VVTRange=None, speedRange=(1000, 6000), loadRange=(15, 75), doulbeCalib=False, alpha=None):
+    def __init__(self, Data, AngleRange=None, VVTRange=None, speedRange=None, loadRange=None, doulbeCalib=False, alpha=None):
         # Input is a dataframe
         Data = np.asarray(Data, dtype=float)
         # Number of training data samples
-        self.N = np.around(0.8 * Data.shape[0]).astype(int)
+        self.N = np.around(0.7 * Data.shape[0]).astype(int)
         # Number of testing data samples
         self.Nt = Data.shape[0] - self.N
         # Training input dataset
         self.Xtrain = Data[:self.N, :4]
         # Testing input dataset
         self.Xtest = Data[self.N:, :4]
+        # Standardize output data for multiobjective optimization
         ytrain = Data[:self.N, -2:]
         ytest = Data[self.N:, -2:]
         meany = np.mean(ytrain, axis=0)
@@ -44,10 +45,26 @@ class BOCalib:
         self.speedRange = speedRange
         self.loadRange = loadRange
 
+    def fitGP(self, nstarts=20, plot=False):
+        gp = GP(self.Xtrain, self.ytrain)
+        par_bar, _, _ = gp.fit(nstarts)
+        ypre, varypre = gp.predict(par_bar, self.Xtest)
+        if plot:
+            ybar = np.mean(self.ytest)
+            S_tot = np.sum((self.ytest - ybar)**2)
+            S_res = np.sum((self.ytest - ypre)**2)
+            R2 = 1 - S_res / S_tot
+            plt.plot(np.arange(0, self.Nt), self.ytest, 'b-.', lw=2, label='real')
+            plt.gca().fill_between(np.arange(0, self.Nt), ypre - 2 * np.sqrt(varypre), ypre + 2 * np.sqrt(varypre), color="#dddddd")
+            plt.plot(np.arange(0, self.Nt), ypre, 'r--', lw=2, label='prediction with R2 = {}'.format(R2))
+            plt.legend()
+            plt.show()
+        return gp, par_bar
+
     @property
     def generateDOE(self):
-        loadRange = range(self.loadRange[0], self.loadRange[1] + 5, 5)
-        speedRange = range(self.speedRange[0], self.speedRange[1] + 200, 200)
+        loadRange = range(self.loadRange[0], self.loadRange[1] + self.loadRange[2], self.loadRange[2])
+        speedRange = range(self.speedRange[0], self.speedRange[1] + self.speedRange[2], self.speedRange[2])
         columns = ['{}'.format(i) for i in speedRange]
         index = ['{}'.format(i) for i in loadRange]
         df_angle = pd.DataFrame(index=index, columns=columns, dtype=float)
@@ -65,18 +82,6 @@ class BOCalib:
         createFolder('./Results/')
         df_VVT.to_csv('Results/VVTCalibr.csv', sep=',')
         df_angle.to_csv('Results/AngleCalibr.csv', sep=',')
-
-    def fitGP(self, nstarts=20, plot=False):
-        gp = GP(self.Xtrain, self.ytrain)
-        par_bar, _, _ = gp.fit(nstarts)
-        ypre, varypre = gp.predict(par_bar, self.Xtest)
-        if plot:
-            plt.plot(np.arange(0, self.Nt), self.ytest, 'b-.', lw=2)
-            plt.gca().fill_between(np.arange(0, self.Nt), ypre - 2 * np.sqrt(varypre), ypre + 2 * np.sqrt(varypre), color="#dddddd")
-            plt.plot(np.arange(0, self.Nt), ypre, 'r--', lw=2)
-            plt.legend('Actual', 'Prediction')
-            plt.show()
-        return gp, par_bar
 
     def saveFig(self, gp, par_bar, test_point, count):
         N = 40

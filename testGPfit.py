@@ -16,7 +16,7 @@ Nt = xtest.shape[0]
 
 gp = GP(xtrain, ytrain)
 start = timer()
-par, _, _ = gp.fit(nstarts=20)
+par, _, _ = gp.fit(nstarts=5)
 end = timer()
 print(end - start)
 ypre, varypre = gp.predict(par, xtest)

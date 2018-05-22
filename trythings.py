@@ -4,28 +4,21 @@ from bo_core import (AcqOptimizer, GP)
 import matplotlib.pyplot as pl
 import os
 
-df = pd.read_csv('VVT.csv', header=None)
-df.dropna(how='all', inplace=True)
+df = pd.read_csv('./Data/vvt_diesel.csv')
+
+# df.drop(df[df['COV'] > 3].index, inplace=True)
+
+df.dropna(how='any', inplace=True)
 df = df.reset_index(drop=True)
-idx = np.random.randint(0, 1000, 100)
-xtrain0 = np.asarray(df.loc[idx, :3])
-param = np.load('param.npy').item()
 
-A = np.array([5, 6, 7, 8])
-path = os.getcwd()
+N = 200
+T = df.shape[0]
+idx = np.random.randint(0, T, N)
+# Remember to never standardize the input data
+# They are automatically standardized in the GP class
+Data = df.iloc[idx, :-1].values
 
-
-def Folder(directory):
-    try:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-    except OSError:
-        print('Error: Creating directory. ' + directory)
-
-
-Folder('./Figs/')
-
-
+print(df)
 # angle_min = df.loc[:, [2]].min().values[0]
 # angle_max = df.loc[:, [2]].max().values
 # VVT_min = df.loc[:, [3]].min().values
