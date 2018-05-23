@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from .Optimizer import AcqOptimizer
+from .AcqMaximizer import AcqMax
 from .GaussProcess import GP
 from .Functions import createFolder
 
@@ -75,7 +75,7 @@ class BOCalib:
             for j in speedRange:
                 count += 1
                 self.saveFig(gp, par_bar, [j, i], count)
-                Acq = AcqOptimizer(par_bar, gp, self.bound, [], [j, i])
+                Acq = AcqMax(par_bar, gp, self.bound, [], [j, i])
                 xbest, _ = Acq.optim(nstarts=5, mode=1)
                 df_angle.loc['{}'.format(i), '{}'.format(j)] = xbest[0]
                 df_VVT.loc['{}'.format(i), '{}'.format(j)] = xbest[1]

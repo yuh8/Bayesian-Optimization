@@ -78,6 +78,7 @@ class GP:
         mean_Ypre += temp
         # Eq2.26
         var_Ypre = par_bar[0]**2 - np.diag(np.dot(np.dot(kpre1.T, invKs), kpre1))
+        # print(Xpre)
         return mean_Ypre, var_Ypre
 
     # Method for computing the derivative of the negloglike

@@ -15,7 +15,7 @@ df = df.reset_index(drop=True)
 
 N = 100
 T = df.shape[0]
-idx = np.random.randint(0, T, T)
+idx = np.random.randint(0, T, N)
 # Remember to never standardize the input data
 # They are automatically standardized in the GP class
 Data = df.iloc[idx, :-1].values
@@ -24,4 +24,4 @@ Data = df.iloc[idx, :-1].values
 BO = BOCalib(Data, AngleRange=(-5, 46), VVTRange=(0, 48), speedRange=(1200, 5600, 400), loadRange=(100, 2400, 100), doulbeCalib=True, alpha=0.6)
 
 # BO.fitGP(nstarts=20, plot=True)
-BO.generateDOE
+# BO.generateDOE
