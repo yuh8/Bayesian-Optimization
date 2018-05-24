@@ -28,7 +28,7 @@ class GP:
         n2 = len(self.y)
         if self.N != n2:
             raise ValueError('the number of output and input training data samples must be equal')
-        self.tol = 1e-8
+        self.tol = 1e-10
 
     # Compute the negative marginal log-likelihood
     def negloglik(self, par):

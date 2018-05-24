@@ -11,7 +11,7 @@ def process(x):
 
 
 # Generate two data points from function
-Xtrain = np.array([-1, 8]).reshape(-1, 1)
+Xtrain = np.array([2, 8]).reshape(-1, 1)
 ytrain = process(Xtrain).reshape(1, -1)[0]
 ybest_pre = np.min(ytrain)
 Xtrain0 = Xtrain.tolist()
@@ -27,9 +27,9 @@ fig.show()
 fig.canvas.draw()
 
 itr1 = 0
-while itr1 < 30:
+while itr1 < 10:
     itr1 += 1
-    BO = BayesOpt(Xtrain, ytrain, ybest_pre, bound)
+    BO = BayesOpt(Xtrain, ytrain, ybest_pre, bound, method='UCB')
 
     xbest_cur, ybest_cur = BO.max_opts(ns=20)
     # Augment new location for exploration and add results
@@ -41,22 +41,23 @@ while itr1 < 30:
     ybest_pre = np.min(ytrain)
 
     # Demo
-    EI, m_x, s_x = BO.PredictEI(np.linspace(-10, 10, 100).reshape(-1, 1))
-    # print(EI.argmax(), xbest_cur)
+    EI, m_x, s_x = BO.PredictImprovement(np.linspace(-10, 10, 100).reshape(-1, 1))
+
     plt.subplot(211)
-    plt.plot(temp, m_x, 'b-')
-    plt.plot(temp,process(temp),'r--')
-    plt.gca().fill_between(temp, m_x - 2 * np.sqrt(s_x), m_x + 2 * np.sqrt(s_x), color="#dddddd")
+    plt.plot(temp, m_x, 'b-', label='Approximation')
+    plt.plot(temp, process(temp), 'r--', label='target')
+    plt.gca().fill_between(temp, m_x - 2 * np.sqrt(s_x), m_x + 2 * np.sqrt(s_x), color="#dddddd", label='95%% confidence bound')
     plt.plot(np.array(Xtrain), process(np.array(Xtrain)), 'r*')
-    plt.title('Posterior fit')
+    plt.ylabel('Posterior fit')
+    plt.legend()
     plt.xlim([-2, 10])
+
     plt.subplot(212)
     plt.plot(temp, EI, 'k-')
     plt.plot([xbest_cur, xbest_cur], [0, max(EI)])
-    plt.title('Expected Improvement')
+    plt.ylabel('Searching Envelope')
 
     plt.xlim([-2, 10])
     plt.pause(1)  # Pause 1 second
-
-    plt.clf()
     fig.canvas.draw()
+    plt.clf()
