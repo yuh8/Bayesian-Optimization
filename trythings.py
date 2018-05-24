@@ -4,6 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-A = 'UCB'
+A = np.array([1, 2, 3])
 
-print(A.lower( == 'UCD'.lower())
+print(A.shape)

@@ -10,7 +10,7 @@ class BayesOpt:
     xbest,ybest are the augmented bests from previous exploitation
     """
 
-    def __init__(self, X, y, ybest, xbound, xconst=[], method='UCB'):
+    def __init__(self, X, y, ybest, xbound, method='UCB'):
         # Making sure the size of the inputs are compatible
         if len(X.shape) == 1 or len(y) == 1:
             raise ValueError('number of initial points must be at least 2')
@@ -23,11 +23,11 @@ class BayesOpt:
         self.bound = xbound
         self.method = method
 
-    def max_opts(self, ns=10):
+    def max_opts(self, ns=20):
         gp = GP(self.X, self.y)
         par_bar, _, _ = gp.fit(nstarts=ns)
-        self.Acq = AcqMax(par_bar, gp, self.bound, self.ybest, [], method=self.method)
-        xbest_new, ybest_new = self.Acq.optim(nstarts=ns, mode=0)
+        self.Acq = AcqMax(par_bar, gp, self.bound, self.ybest, method=self.method)
+        xbest_new, ybest_new = self.Acq.optim(nstarts=ns)
         return xbest_new, ybest_new
 
     def PredictImprovement(self, Xtry):

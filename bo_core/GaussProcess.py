@@ -18,7 +18,7 @@ class GP:
             raise ValueError('the number of data points must be at least 2')
         # Training data sample size
         self.N = np.size(X, 0)
-        # Demean train data
+        # Standardize train data
         self.X, self.meanX, self.stdX = demean(X)
 
         # Output data is a 1D numpy array
@@ -28,7 +28,6 @@ class GP:
         n2 = len(self.y)
         if self.N != n2:
             raise ValueError('the number of output and input training data samples must be equal')
-        self.tol = 1e-10
 
     # Compute the negative marginal log-likelihood
     def negloglik(self, par):
@@ -47,17 +46,18 @@ class GP:
         '''
         # Be careful of the lazy coding of number of hyper parameters
         d = 3
-        max_fun = -np.inf
+        min_fun = np.inf
         for i in range(0, nstarts):
             par0 = np.random.rand(d)
             # Be careful the output of scipy minimize is an ndarray
-            res = spmin(self.negloglik, par0, method='L-BFGS-B', options={'gtol': self.tol, 'disp': False, 'maxfun': 50})
+            res = spmin(self.negloglik, par0, method='L-BFGS-B', options={'disp': False})
+            # Reject non-successful runs
+            if not res.success:
+                continue
             # Choose the start yielding the Max LL
-            if res.fun > max_fun:
-                max_fun = res.fun
-                temp = res.x
-        res = spmin(self.negloglik, temp, method='L-BFGS-B', options={'gtol': self.tol, 'disp': False})
-        par_bar = res.x
+            if res.fun < min_fun:
+                min_fun = res.fun
+                par_bar = res.x
         return par_bar, self.meanX, self.stdX
 
     # Posterior prediction
