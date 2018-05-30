@@ -26,14 +26,9 @@ def covSE(par, X, Xpre, trainmode=0):
         Xpre = Xpre.reshape(1, -1)
 
     N = X.shape[0]
-    Nt = Xpre.shape[0]
     D = X.shape[1]
-    exp_temp = np.zeros((N, Nt))
-
-    for i in range(0, N):
-        for j in range(0, Nt):
-            temp1 = X[i, :] - Xpre[j, :]
-            exp_temp[i, j] = np.dot(temp1, temp1)
+    exp_temp = np.sum(X**2, axis=1).reshape(-1, 1) - 2 * np.dot(X, Xpre.T)
+    exp_temp += np.sum(Xpre**2, axis=1)
     # None derivative mode
     if trainmode == 0:
         K = par[0]**2 * np.exp(-1 / 2 * exp_temp / par[1]**2)
@@ -44,7 +39,7 @@ def covSE(par, X, Xpre, trainmode=0):
     elif trainmode == 2:
         K = par[0]**2 * np.exp(-1 / 2 * exp_temp / par[1]**2)
         temp = exp_temp / par[1]**3
-        K = K * temp
+        K *= temp
     # der k/ der x
     else:
         acq_temp = np.zeros((N, D))
@@ -52,7 +47,7 @@ def covSE(par, X, Xpre, trainmode=0):
             acq_temp[i, :] = X[i, :] - Xpre[0, :]
         K = par[0]**2 * np.exp(-1 / 2 * exp_temp[:, 0] / par[1]**2)
         K = np.tile(K, (D, 1)).T
-        K = K * acq_temp
+        K *= acq_temp
     return K
 
 

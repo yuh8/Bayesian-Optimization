@@ -11,7 +11,7 @@ def process(x):
 
 
 # Generate two data points from function
-Xtrain = np.array([2, 8]).reshape(-1, 1)
+Xtrain = np.array([-1, 8]).reshape(-1, 1)
 ytrain = process(Xtrain).reshape(1, -1)[0]
 ybest_pre = np.min(ytrain)
 Xtrain0 = Xtrain.tolist()
@@ -27,7 +27,7 @@ fig.show()
 fig.canvas.draw()
 
 itr1 = 0
-while itr1 < 20:
+while itr1 < 16:
     itr1 += 1
     BO = BayesOpt(Xtrain, ytrain, ybest_pre, bound, method='UCB')
 

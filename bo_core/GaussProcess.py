@@ -57,11 +57,12 @@ class GP:
             # Choose the start yielding the Max LL
             if res.fun < min_fun:
                 min_fun = res.fun
-                par_bar = res.x
-        return par_bar, self.meanX, self.stdX
+                par = res.x
+        _, _, self.invKs = choleInvKs(par, self.X, covSE)
+        return par, self.meanX, self.stdX
 
     # Posterior prediction
-    def predict(self, par_bar, Xpre):
+    def predict(self, par, Xpre):
         # Testing data sample size
         Xpre = np.asarray(Xpre)
         if len(Xpre.shape) == 1:
@@ -70,14 +71,13 @@ class GP:
         # standardize test data
         Xpre -= self.meanX
         Xpre /= self.stdX
-        _, _, invKs = choleInvKs(par_bar, self.X, covSE)
-        kpre1 = covSE(par_bar, self.X, Xpre)
+        kpre1 = covSE(par, self.X, Xpre)
         # Eq2.25
-        mean_Ypre = np.dot(np.dot(kpre1.T, invKs), self.y)
+        mean_Ypre = np.dot(np.dot(kpre1.T, self.invKs), self.y)
         temp = self.meany * np.ones(Npre)
         mean_Ypre += temp
         # Eq2.26
-        var_Ypre = par_bar[0]**2 - np.diag(np.dot(np.dot(kpre1.T, invKs), kpre1))
+        var_Ypre = par[0]**2 - np.diag(np.dot(np.dot(kpre1.T, self.invKs), kpre1))
         # print(Xpre)
         return mean_Ypre, var_Ypre
 
@@ -92,11 +92,10 @@ class GP:
         temp = alpha2 - invKs
         # Derivative w.r.t par[0]
         der_temp = covSE(par, self.X, self.X, trainmode=1)
-        der[0] = 1 / 2 * np.trace(np.dot(temp, der_temp))
+        der[0] = 1 / 2 * np.sum(temp * der_temp)
         # Derivative w.r.t par[1]
         der_temp1 = covSE(par, self.X, self.X, trainmode=2)
-        der[1] = 1 / 2 * np.trace(np.dot(temp, der_temp1))
+        der[1] = 1 / 2 * np.sum(temp * der_temp1)
         # Derivative w.r.t par[2]
-        der_temp2 = 2 * par[2] * np.eye(self.N)
-        der[2] = 1 / 2 * np.trace(np.dot(temp, der_temp2))
+        der[2] = par[2] * np.trace(temp)
         return der
